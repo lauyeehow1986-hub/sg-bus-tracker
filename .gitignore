@@ -1,0 +1,32 @@
+# Personal API key — created at runtime when user saves it via the UI
+lta_api_key.txt
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime files (created when proxy runs)
+.sg-bus-tracker.log
+.sg-bus-tracker.pid
+
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build artifacts (not currently used, but defensive)
+node_modules/
+dist/
+build/
+
+# Log files anywhere in the project
+*.log
+
+# Backup files from sed/edits
+*.bak

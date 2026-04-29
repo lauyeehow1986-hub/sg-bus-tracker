@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SG Bus">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>SG Bus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-mark" aria-hidden="true">SG</div>
+    <div class="header-text">
+      <h1>Bus Tracker</h1>
+      <p id="proxyStatusText" aria-live="polite">checking proxy…</p>
+    </div>
+    <button class="api-btn" id="apiToggleBtn" aria-label="API key settings" aria-expanded="false" aria-controls="api-panel">⚙ API Key</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- T6: Train service alerts banner (hidden when no disruption) -->
+  <div id="train-alerts-banner" role="status" aria-live="polite" aria-label="Train service alerts"></div>
+
+  <!-- API Key Panel -->
+  <div id="api-panel">
+    <h3>🔑 LTA DataMall API Key</h3>
+    <p>
+      Get a free key at <a href="https://datamall.lta.gov.sg" target="_blank" rel="noopener">datamall.lta.gov.sg</a> → Request for API Access.<br><br>
+      Your key is saved on <strong>your device</strong> in <code>lta_api_key.txt</code> next to proxy.py — never sent anywhere else.
+    </p>
+    <div class="proxy-status" id="proxyStatusBox" role="status" aria-live="polite">
+      <div class="proxy-dot err" id="proxyDot" aria-hidden="true"></div>
+      <span id="proxyStatusMsg">Checking proxy…</span>
+      <button id="proxyRetryBtn" aria-label="Retry proxy connection" style="margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;cursor:pointer;flex-shrink:0">Retry</button>
+    </div>
+    <label for="apiKeyInput" class="sr-only">LTA DataMall API key</label>
+    <input type="password" id="apiKeyInput" placeholder="Paste your API key here…" autocomplete="off">
+    <div class="row">
+      <button id="saveKeyBtn" class="btn-primary">Save Key</button>
+      <button id="closeKeyBtn" class="btn-primary" style="background:var(--surface2);color:var(--muted)">Close</button>
+    </div>
+    <div class="cache-status" id="cacheStatus" style="display:none">
+      <div class="cache-status-row"><span>App shell cached</span><span id="cacheShellCount">—</span></div>
+      <div class="cache-status-row"><span>Map tiles cached</span><span id="cacheTileCount">—</span></div>
+      <div class="cache-status-row" style="margin-top:4px">
+        <button id="clearTileBtn" style="background:transparent;border:none;color:var(--muted);font-size:11px;font-family:var(--mono);cursor:pointer;padding:0">Clear tile cache</button>
+        <button id="updateSWBtn" style="background:transparent;border:none;color:var(--accent2);font-size:11px;font-family:var(--mono);cursor:pointer;padding:0">Check for update</button>
+      </div>
+    </div>
+    <div class="operator-legend" aria-label="Bus service operator colour key">
+      <div class="operator-legend-title">Service badge colours</div>
+      <div class="operator-legend-row">
+        <span class="service-badge svc-sbst" aria-hidden="true">14</span>
+        <span>SBS Transit</span>
+      </div>
+      <div class="operator-legend-row">
+        <span class="service-badge svc-smrt" aria-hidden="true">75</span>
+        <span>SMRT Buses</span>
+      </div>
+      <div class="operator-legend-row">
+        <span class="service-badge svc-tts" aria-hidden="true">77</span>
+        <span>Tower Transit</span>
+      </div>
+      <div class="operator-legend-row">
+        <span class="service-badge svc-gas" aria-hidden="true">9</span>
+        <span>Go-Ahead SG</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + Nearby -->
+  <div class="search-row">
+    <div class="search-wrap" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="suggestions">
+      <label for="searchInput" class="sr-only">Search bus stops by number or name</label>
+      <input type="text" class="search-input" id="searchInput"
+        placeholder="Bus stop number or name…"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        aria-autocomplete="list" aria-controls="suggestions" aria-activedescendant="">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </div>
+    <button class="nearby-btn" id="nearbyBtn" aria-label="Find nearby bus stops using location" title="Find nearby stops">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+        <path d="M4.93 4.93l2.12 2.12m9.9 9.9l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="suggestions" role="listbox" aria-label="Bus stop search results"></div>
+
+  <!-- Favourites -->
+  <div id="favSection" style="display:none">
+    <div class="section-label">★ Favourites <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">(hold to rename)</span></div>
+    <div class="fav-chips" id="favChips"></div>
+  </div>
+
+  <!-- Stop Header -->
+  <div id="stop-header">
+    <div class="stop-header-inner">
+      <div class="stop-title">
+        <div class="stop-code-big" id="displayCode"></div>
+        <div class="stop-name-big" id="displayName"></div>
+        <div class="stop-road-big" id="displayRoad"></div>
+      </div>
+      <div class="stop-actions">
+        <button class="icon-btn" id="planBtn" aria-label="Plan journey to destination" title="Plan journey to destination" style="display:none;font-size:13px;font-family:var(--mono)">→B</button>
+        <button class="icon-btn" id="favBtn" aria-label="Add to favourites" aria-pressed="false" title="Favourite">☆</button>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" aria-label="Refresh bus arrivals">
+      <span class="spin-icon" aria-hidden="true">↻</span> Refresh
+    </button>
+    <div class="last-updated" id="lastUpdated" aria-live="polite"></div>
+  </div>
+
+  <!-- Plan Journey Panel -->
+  <div id="plan-panel" style="display:none" role="region" aria-label="Journey planner">
+    <div class="plan-header">
+      <div class="plan-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Plan Journey
+      </div>
+      <button class="route-close" id="closePlanBtn" aria-label="Close journey planner">✕</button>
+    </div>
+
+    <div class="plan-origin">
+      <div class="plan-leg-label">FROM</div>
+      <div class="plan-leg-stop" id="planOriginName">—</div>
+      <div class="plan-leg-code" id="planOriginCode">—</div>
+    </div>
+
+    <div class="plan-dest-wrap">
+      <div class="plan-leg-label">TO</div>
+      <div class="plan-search-row" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="planSuggestions">
+        <label for="planDestInput" class="sr-only">Destination bus stop</label>
+        <input type="text" id="planDestInput"
+          placeholder="Enter destination stop…"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+          aria-autocomplete="list" aria-controls="planSuggestions" aria-activedescendant=""
+          class="plan-dest-input">
+        <button class="plan-go-btn" id="planGoBtn" aria-label="Search routes to destination" style="display:none">Go</button>
+      </div>
+      <div id="planSuggestions" class="plan-suggestions" role="listbox" aria-label="Destination search results"></div>
+    </div>
+
+    <div id="planResults" aria-live="polite" aria-atomic="false"></div>
+  </div>
+
+  <!-- Route Panel -->
+  <div id="route-panel" role="region" aria-label="Bus route">
+    <div class="route-panel-header">
+      <div class="route-panel-title">
+        <span id="routeServiceBadge" style="font-family:var(--mono);font-size:13px;padding:2px 8px;border-radius:5px;background:var(--accent);color:var(--bg)"></span>
+        <span>Route stops</span>
+      </div>
+      <button class="route-close" id="closeRouteBtn" aria-label="Close route view">✕</button>
+    </div>
+    <div class="map-dir-tabs" id="mapDirTabs" role="tablist" style="display:none"></div>
+    <div class="route-stops-list" id="routeStopsList" role="list"></div>
+    <button class="map-toggle-btn" id="mapToggleBtn" aria-expanded="false" aria-controls="map-container" style="display:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+      Show map
+      <span class="map-arrow" aria-hidden="true">▾</span>
+    </button>
+    <div id="map-container">
+      <div id="route-map"></div>
+    </div>
+  </div>
+
+  <!-- Arrivals -->
+  <div id="arrivals" role="region" aria-label="Bus arrivals" aria-live="polite" aria-atomic="false"></div>
+
+</main>
+
+<!-- Offline indicator -->
+<div id="offline-bar" role="status" aria-live="polite">⚡ Offline — showing cached data</div>
+
+<!-- Pull-to-refresh indicator -->
+<div id="ptr-indicator" aria-hidden="true">↻</div>
+
+<!-- PWA Install banner -->
+<div id="install-banner" role="region" aria-label="Install app">
+  <div class="install-icon" aria-hidden="true">SG</div>
+  <div class="install-text">
+    <strong>Add to Home Screen</strong>
+    <span>Use SG Bus like a native app</span>
+  </div>
+  <div class="install-actions">
+    <button id="installBtn" class="install-btn" aria-label="Install app to home screen">Install</button>
+    <button id="installDismiss" class="install-dismiss" aria-label="Dismiss install prompt">✕</button>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
