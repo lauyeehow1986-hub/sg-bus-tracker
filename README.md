@@ -192,6 +192,7 @@ Key milestones:
 - **v10.8–v10.10** — search and nearby fixes
 - **v10.11** — alighting alarm
 - **v10.12** — per-stop announcements + hidden-tab robustness
+- **v10.13** — remove localhost binding
 
 Full notes in [`docs/changelog/`](docs/changelog/).
 
