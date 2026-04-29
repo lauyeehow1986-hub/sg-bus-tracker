@@ -10,7 +10,7 @@
 // the proxy check. We detect proxy calls by path prefix on the page origin,
 // so it works when the page is served from a LAN IP like 192.168.x.x.
 
-const CACHE_VERSION = 'sg-bus-v10-12';
+const CACHE_VERSION = 'sg-bus-v10-13';
 const TILE_CACHE    = 'sg-bus-tiles-v1';
 
 const APP_SHELL = [

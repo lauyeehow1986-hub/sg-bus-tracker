@@ -29,7 +29,7 @@ export function registerSW() {
   if (window.caches) {
     caches.keys().then(keys => {
       for (const k of keys) {
-        if (k === 'sg-bus-v10-11' || k === 'sg-bus-v10-10' || k === 'sg-bus-v10-9' || k === 'sg-bus-v10-8' || k === 'sg-bus-v10-7' || k === 'sg-bus-v10-6' || k === 'sg-bus-v10-5' || k === 'sg-bus-v10-4' || k === 'sg-bus-v10-3' || k === 'sg-bus-v10-2' || k === 'sg-bus-v10-1' || k === 'sg-bus-v10' || k === 'sg-bus-v9' || k === 'sg-bus-v8-2' || k === 'sg-bus-v8' || k === 'sg-bus-v7' || k === 'sg-bus-v6' || k === 'sg-bus-v5' || k === 'sg-bus-v4' || k === 'sg-bus-v3' || k === 'sg-bus-v2' || k === 'sg-bus-v1') {
+        if (k === 'sg-bus-v10-12' || k === 'sg-bus-v10-11' || k === 'sg-bus-v10-10' || k === 'sg-bus-v10-9' || k === 'sg-bus-v10-8' || k === 'sg-bus-v10-7' || k === 'sg-bus-v10-6' || k === 'sg-bus-v10-5' || k === 'sg-bus-v10-4' || k === 'sg-bus-v10-3' || k === 'sg-bus-v10-2' || k === 'sg-bus-v10-1' || k === 'sg-bus-v10' || k === 'sg-bus-v9' || k === 'sg-bus-v8-2' || k === 'sg-bus-v8' || k === 'sg-bus-v7' || k === 'sg-bus-v6' || k === 'sg-bus-v5' || k === 'sg-bus-v4' || k === 'sg-bus-v3' || k === 'sg-bus-v2' || k === 'sg-bus-v1') {
           console.log('[PWA] Evicting stale cache:', k);
           caches.delete(k);
         }

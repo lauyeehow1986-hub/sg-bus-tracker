@@ -119,14 +119,16 @@ class ProxyHandler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args): pass
 
     def send_cors_headers(self):
-        # Permissive CORS for LAN use only — this proxy is not for public exposure.
+        # T20: server now binds to 127.0.0.1 only, so no remote origin
+        # can reach this proxy. CORS headers below are mostly defensive
+        # — they ensure same-origin requests work cleanly regardless of
+        # how the page is loaded (direct URL vs installed PWA context).
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers",
                          "Content-Type, AccountKey, X-Requested-With")
-        # *** THE KEY CHROME FIX ***
-        # Send this on every response, not just preflights. Chrome's PNA check
-        # runs on the final response too when initiator is a LAN-IP origin.
+        # PNA header retained for compatibility but no longer load-bearing
+        # — same-origin requests don't trigger Chrome's PNA check.
         self.send_header("Access-Control-Allow-Private-Network", "true")
         self.send_header("Access-Control-Max-Age", "86400")
         # Don't let the browser cache 4xx/5xx forever
@@ -320,21 +322,24 @@ if __name__ == "__main__":
     key = load_api_key()
 
     print("=" * 55)
-    print("  SG Bus Tracker — Proxy  (Chrome PNA-safe)")
+    print("  SG Bus Tracker — Proxy")
     print("=" * 55)
     print(f"  Key     : {'SET ✓' if key else 'NOT SET'}")
-    print(f"  LAN IP  : {LAN_IP}")
+    print(f"  Bind    : 127.0.0.1:{PROXY_PORT}  (localhost only)")
     print()
-    print(f"  ► Open ONE of these in Chrome. PICK THE SAME ONE")
-    print(f"    YOU USE TO FETCH THE PROXY (don't mix):")
-    print()
-    print(f"    http://127.0.0.1:{PROXY_PORT}/index.html   (best on desktop)")
-    print(f"    http://{LAN_IP}:{PROXY_PORT}/index.html   (best on phone)")
+    print(f"  ► Open this in Chrome on the same device:")
+    print(f"    http://127.0.0.1:{PROXY_PORT}/index.html")
     print()
     print("  Stop: Ctrl+C")
     print("=" * 55 + "\n")
 
-    server = ThreadingHTTPServer(("0.0.0.0", PROXY_PORT), ProxyHandler)
+    # T20: bind to loopback only. Previously bound to 0.0.0.0 (all
+    # interfaces), which exposed the proxy to the entire LAN. Anyone on
+    # the same WiFi could hit /setkey, /logs, or /lta endpoints.
+    # Localhost-only eliminates that attack surface entirely. The trade-
+    # off is no LAN-IP access from a laptop on the same network — but
+    # the documented usage was always 127.0.0.1 anyway.
+    server = ThreadingHTTPServer(("127.0.0.1", PROXY_PORT), ProxyHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
