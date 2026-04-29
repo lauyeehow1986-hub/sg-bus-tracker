@@ -7,7 +7,7 @@ DataMall API, and Chrome.
 Built for personal use as a faster alternative to commercial bus apps,
 with features oriented around real Singapore commute scenarios.
 
-![Status: v10.12 — actively used in daily commutes](https://img.shields.io/badge/status-v10.12_daily_use-brightgreen)
+![Status: v10.13 — actively used in daily commutes](https://img.shields.io/badge/status-v10.13_daily_use-brightgreen)
 ![Platform: Android via Termux + Chrome PWA](https://img.shields.io/badge/platform-Android_(Termux_%2B_Chrome_PWA)-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
